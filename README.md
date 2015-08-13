@@ -1,2 +1,2 @@
 # LocationFlickr-iOS
-This is an iOS version of the LocationFlickr app.
+This is an iOS version of the LocationFlickr Android app.
