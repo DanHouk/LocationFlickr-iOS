@@ -31,18 +31,18 @@ class ImageViewController: UIViewController {
     
     func loadfullImage() -> Void {
         let url = self.flickrImage.getImageURL("z")
-        var urlRequest = NSURLRequest(URL: url)
-        var operationQue:NSOperationQueue = NSOperationQueue()
+        let urlRequest = NSURLRequest(URL: url)
+        let operationQue:NSOperationQueue = NSOperationQueue()
         
         NSURLConnection.sendAsynchronousRequest(urlRequest, queue: operationQue) { response, data, error -> Void in
             if(error != nil) {
-                NSLog("Main Image View Controller", error)
+                NSLog("Main Image View Controller", error!)
                 
                 return
             }
             
             if(data != nil) {
-                self.flickrImage.fullImage = UIImage(data: data)
+                self.flickrImage.fullImage = UIImage(data: data!)
                 self.imageImageView.image = self.flickrImage.fullImage
             }
         }

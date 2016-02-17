@@ -48,7 +48,7 @@ class ImageCollectionViewController: UICollectionViewController, CLLocationManag
     override func prepareForSegue(segue: UIStoryboardSegue, sender: AnyObject?) {
         // Get the new view controller using [segue destinationViewController].
         // Pass the selected object to the new view controller.
-        var detailViewController = segue.destinationViewController as? ImageViewController
+        let detailViewController = segue.destinationViewController as? ImageViewController
         detailViewController?.setFlickrImage(flickrImage)
         
     }
@@ -69,7 +69,7 @@ class ImageCollectionViewController: UICollectionViewController, CLLocationManag
     override func collectionView(collectionView: UICollectionView, cellForItemAtIndexPath indexPath: NSIndexPath) -> UICollectionViewCell {
         let cell = collectionView.dequeueReusableCellWithReuseIdentifier(reuseIdentifier, forIndexPath: indexPath) as! ImageCollectionViewCell
         
-        var flickrImageAtIndex = photoForIndexPath(indexPath)
+        let flickrImageAtIndex = photoForIndexPath(indexPath)
         
         self.loadThumbnail(flickrImageAtIndex) {
             returnedFlickrImage, error in
@@ -94,29 +94,29 @@ class ImageCollectionViewController: UICollectionViewController, CLLocationManag
     }
     
     func fetchAllImages() {
-        var longString = String(stringInterpolationSegment: self.long)
-        var longDouble = (longString as NSString).doubleValue
-        var latString = String(stringInterpolationSegment: self.lat)
-        var latDouble = (latString as NSString).doubleValue
+        let longString = String(stringInterpolationSegment: self.long)
+        let longDouble = (longString as NSString).doubleValue
+        let latString = String(stringInterpolationSegment: self.lat)
+        let latDouble = (latString as NSString).doubleValue
         let urlString = "https://api.flickr.com/services/rest/?method=flickr.photos.search&name=value&api_key=535b54e75b084504069f7b66d8bfb7c7&bbox=" + String(format: "%f", (longDouble - 0.2)) + "," + String(format: "%f", (latDouble - 0.2)) + "," + String(format: "%f", (longDouble + 0.2)) + "," + String(format: "%f", (latDouble + 0.2))
-        var url: NSURL! = NSURL(string: urlString)
-        var urlRequest:NSURLRequest = NSURLRequest(URL: url)
-        var operationQue:NSOperationQueue = NSOperationQueue()
+        let url: NSURL! = NSURL(string: urlString)
+        let urlRequest:NSURLRequest = NSURLRequest(URL: url)
+        let operationQue:NSOperationQueue = NSOperationQueue()
         
         NSURLConnection.sendAsynchronousRequest(urlRequest, queue: operationQue) { response, data, error -> Void in
             if(error != nil) {
-                NSLog("Main Image View Controller", error)
+                NSLog("Main Image View Controller", error!)
                 return
             }
             
-            self.imageViewParser = NSXMLParser(data: data)
+            self.imageViewParser = NSXMLParser(data: data!)
             self.imageViewParser.delegate = self;
             self.imageViewParser.parse()
         }
     }
     
-    func locationManager(manager: CLLocationManager!, didUpdateLocations locations: [AnyObject]!) {
-        var location: CLLocationCoordinate2D = locationManager.location.coordinate
+    func locationManager(manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
+        let location: CLLocationCoordinate2D = locationManager.location!.coordinate
         
         self.long = location.longitude
         self.lat = location.latitude
@@ -124,48 +124,48 @@ class ImageCollectionViewController: UICollectionViewController, CLLocationManag
         locationManager.stopUpdatingLocation()
     }
     
-    func parser(parser: NSXMLParser, didStartElement elementName: String, namespaceURI: String?, qualifiedName qName: String?, attributes attributeDict: [NSObject : AnyObject]) {
+    func parser(parser: NSXMLParser, didStartElement elementName: String, namespaceURI: String?, qualifiedName qName: String?, attributes attributeDict: [String : String]) {
         if(elementName == "photos") {
             if(attributeDict.count > 0) {
                 for(key, value) in attributeDict {
                     if(key == "page") {
-                        photosData.page = String(value as! NSString).toInt()
+                        photosData.page = Int(value)
                     }
                     
                     if(key == "pages") {
-                        photosData.pages = String(value as! NSString).toInt()
+                        photosData.pages = Int(value)
                     }
                     
                     if(key == "perpage") {
-                        photosData.perPage = String(value as! NSString).toInt()
+                        photosData.perPage = Int(value)
                     }
                     
                     if(key == "total") {
-                        photosData.total = String(value as! NSString).toInt()
+                        photosData.total = Int(value)
                     }
                 }
-                println("GOt to here.")
+                print("GOt to here.")
             }
         }
         
         if(elementName == "photo") {
             if(attributeDict.count > 0) {
-                var tempFlickrImage = FlickrImage()
+                let tempFlickrImage = FlickrImage()
                 for(key, value) in attributeDict {
                     if(key == "farm") {
-                        tempFlickrImage.farm = String(value as! NSString).toInt()
+                        tempFlickrImage.farm = Int(value)
                     }
                     
                     if(key == "id") {
-                        tempFlickrImage.id = String(value as! NSString)
+                        tempFlickrImage.id = String(value)
                     }
                     
                     if(key == "secret") {
-                        tempFlickrImage.secret = String(value as! NSString)
+                        tempFlickrImage.secret = String(value)
                     }
                     
                     if(key == "server") {
-                        tempFlickrImage.server = String(value as! NSString).toInt()
+                        tempFlickrImage.server = Int(value)
                     }
                 }
                 
@@ -174,12 +174,12 @@ class ImageCollectionViewController: UICollectionViewController, CLLocationManag
         }
     }
     
-    func parser(parser: NSXMLParser, foundCharacters string: String?) {
-        println("Entered found characters parser")
+    func parser(parser: NSXMLParser, foundCharacters string: String) {
+        print("Entered found characters parser")
     }
     
     func parser(parser: NSXMLParser, didEndElement elementName: String, namespaceURI: String?, qualifiedName qName: String?) {
-        println("Entered did end element parser")
+        print("Entered did end element parser");
     }
     
     func parserDidEndDocument(parser: NSXMLParser) {
@@ -190,18 +190,18 @@ class ImageCollectionViewController: UICollectionViewController, CLLocationManag
     
     func loadThumbnail(passedFlickrImage: FlickrImage, completion: (flickrImage:FlickrImage, error: NSError?) -> Void) {
         let url = passedFlickrImage.getImageURL("t")
-        var urlRequest = NSURLRequest(URL: url)
+        let urlRequest = NSURLRequest(URL: url)
         
         NSURLConnection.sendAsynchronousRequest(urlRequest, queue: NSOperationQueue.mainQueue()) { response, data, error in
             if(error != nil) {
-                NSLog("Main Image View Controller", error)
+                NSLog("Main Image View Controller", error!)
                 completion(flickrImage: passedFlickrImage, error: error)
                 
                 return
             }
             
             if(data != nil) {
-                passedFlickrImage.thumbnail = UIImage(data: data)
+                passedFlickrImage.thumbnail = UIImage(data: data!)
                 completion(flickrImage: passedFlickrImage, error: nil)
                 
                 return
