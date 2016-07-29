@@ -98,10 +98,10 @@ class ImageCollectionViewController: UICollectionViewController, CLLocationManag
         let longDouble = (longString as NSString).doubleValue
         let latString = String(stringInterpolationSegment: self.lat)
         let latDouble = (latString as NSString).doubleValue
-        let urlString = "https://api.flickr.com/services/rest/?method=flickr.photos.search&name=value&api_key=535b54e75b084504069f7b66d8bfb7c7&bbox=" + String(format: "%f", (longDouble - 0.2)) + "," + String(format: "%f", (latDouble - 0.2)) + "," + String(format: "%f", (longDouble + 0.2)) + "," + String(format: "%f", (latDouble + 0.2))
-        let url: NSURL! = NSURL(string: urlString)
-        let urlRequest:NSURLRequest = NSURLRequest(URL: url)
-        let operationQue:NSOperationQueue = NSOperationQueue()
+        let urlString = "https://api.flickr.com/services/rest/?method=flickr.photos.search&name=value&api_key=535b54e75b084504069f7b66d8bfb7c7&format=json&bbox=" + String(format: "%f", (longDouble - 0.2)) + "," + String(format: "%f", (latDouble - 0.2)) + "," + String(format: "%f", (longDouble + 0.2)) + "," + String(format: "%f", (latDouble + 0.2))
+        let url = NSURL(string: urlString)
+        let urlRequest = NSURLRequest(URL: url!)
+        let operationQue = NSOperationQueue()
         
         NSURLConnection.sendAsynchronousRequest(urlRequest, queue: operationQue) { response, data, error -> Void in
             if(error != nil) {
@@ -109,14 +109,66 @@ class ImageCollectionViewController: UICollectionViewController, CLLocationManag
                 return
             }
             
-            self.imageViewParser = NSXMLParser(data: data!)
-            self.imageViewParser.delegate = self;
-            self.imageViewParser.parse()
+            //self.imageViewParser = NSXMLParser(data: data!)
+            //self.imageViewParser.delegate = self;
+            //self.imageViewParser.parse()
+            do {
+                var jsonError: NSError?
+                let results = try NSJSONSerialization.JSONObjectWithData(data!, options: NSJSONReadingOptions(rawValue: 0)) as? NSDictionary
+                
+                if jsonError != nil {
+                    print(jsonError?.localizedDescription)
+                    return
+                }
+                
+                switch (results!["stat"] as! String) {
+                    case "ok":
+                        print("Results processed OK")
+                    return
+                    
+                    case "fail":
+                        let APIError = NSError(domain: "FlickrSearch", code: 0, userInfo: [NSLocalizedFailureReasonErrorKey:results!["message"]!])
+                        print(APIError.localizedDescription)
+                        return
+                    
+                    default:
+                        let APIError = NSError(domain: "FlickrSearch", code: 0, userInfo: [NSLocalizedFailureReasonErrorKey:"Uknown API response"])
+                        print(APIError.localizedDescription)
+                    
+                        return
+                }
+                
+                let photosContainer = results!["photos"] as! NSDictionary
+                let photosReceived = photosContainer["photo"] as! [NSDictionary]
+                
+                let flickrPhotos : [FlickrImage] = photosReceived.map {
+                    photoDictionary in
+                    
+                    let photoID = photoDictionary["id"] as? String ?? ""
+                    let farm = photoDictionary["farm"] as? Int ?? 0
+                    let server = photoDictionary["server"] as? String ?? ""
+                    let secret = photoDictionary["secret"] as? String ?? ""
+                    
+                    let flickrPhoto = FlickrPhoto(photoID: photoID, farm: farm, server: server, secret: secret)
+                    
+                    let imageData = NSData(contentsOfURL: flickrPhoto.flickrImageURL())
+                    flickrPhoto.thumbnail = UIImage(data: imageData!)
+                    
+                    return flickrPhoto
+                }
+                
+                dispatch_async(dispatch_get_main_queue(), {
+                    //completion(results:FlickrSearchResults(searchTerm: searchTerm, searchResults: flickrPhotos), error: nil)
+                })
+            } catch let error as NSError {
+                print(error.localizedDescription)
+            }
+            
         }
     }
     
     func locationManager(manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
-        let location: CLLocationCoordinate2D = locationManager.location!.coordinate
+        let location = locationManager.location!.coordinate
         
         self.long = location.longitude
         self.lat = location.latitude
