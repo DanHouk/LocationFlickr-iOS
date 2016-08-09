@@ -12,11 +12,20 @@ class FlickrImage {
     var farm: Int!
     var id: String!
     var secret: String!
-    var server: Int!
+    var server: String!
     var thumbnail: UIImage?
     var fullImage: UIImage?
     
     func getImageURL(imageType: String) -> NSURL {
-        return NSURL(string: "http://farm\(farm).staticflickr.com/\(server)/\(id)_\(secret)_\(imageType).jpg")!
+        return NSURL(string: "https://farm\(farm).staticflickr.com/\(server)/\(id)_\(secret)_\(imageType).jpg")!
+    }
+    
+    init () { }
+    
+    init (photoId: String, passedFarm: Int, passedServer: String, passedSecret: String) {
+        self.id = photoId
+        self.farm = passedFarm
+        self.server = passedServer
+        self.secret = passedSecret
     }
 }

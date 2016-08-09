@@ -14,6 +14,5 @@ class PhotosData {
     var perPage: Int!
     var total: Int!
     
-    init(){
-    }
+    init(){ }
 }
