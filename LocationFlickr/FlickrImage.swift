@@ -16,8 +16,8 @@ class FlickrImage {
     var thumbnail: UIImage?
     var fullImage: UIImage?
     
-    func getImageURL(imageType: String) -> NSURL {
-        return NSURL(string: "https://farm\(farm).staticflickr.com/\(server)/\(id)_\(secret)_\(imageType).jpg")!
+    func getImageURL(_ imageType: String) -> URL {
+        return URL(string: "https://farm\(farm!).staticflickr.com/\(server!)/\(id!)_\(secret!)_\(imageType).jpg")!
     }
     
     init () { }

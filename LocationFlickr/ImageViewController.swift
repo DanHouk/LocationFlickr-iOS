@@ -25,18 +25,18 @@ class ImageViewController: UIViewController {
         // Dispose of any resources that can be recreated.
     }
     
-    func setFlickrImage(flickrImage: FlickrImage) {
+    func setFlickrImage(_ flickrImage: FlickrImage) {
         self.flickrImage = flickrImage
     }
     
     func loadfullImage() -> Void {
         let url = self.flickrImage.getImageURL("z")
-        let urlRequest = NSURLRequest(URL: url)
-        let operationQue:NSOperationQueue = NSOperationQueue()
+        let urlRequest = URLRequest(url: url)
+        let operationQue:OperationQueue = OperationQueue()
         
         NSURLConnection.sendAsynchronousRequest(urlRequest, queue: operationQue) { response, data, error -> Void in
             if(error != nil) {
-                NSLog("Main Image View Controller", error!)
+                NSLog("Main Image View Controller", error?.localizedDescription ?? "No message returned")
                 
                 return
             }

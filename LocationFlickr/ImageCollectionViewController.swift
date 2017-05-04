@@ -11,8 +11,8 @@ import CoreLocation
 
 let reuseIdentifier = "FlickrImageCell"
 
-class ImageCollectionViewController: UICollectionViewController, CLLocationManagerDelegate, NSXMLParserDelegate {
-    private let sectionInsets = UIEdgeInsets(top: 50.0, left: 20.0, bottom: 50.0, right: 20.0)
+class ImageCollectionViewController: UICollectionViewController, CLLocationManagerDelegate, XMLParserDelegate {
+    fileprivate let sectionInsets = UIEdgeInsets(top: 50.0, left: 20.0, bottom: 50.0, right: 20.0)
     
     var photos: [FlickrImage] = []
     var flickrImage: FlickrImage?
@@ -20,7 +20,7 @@ class ImageCollectionViewController: UICollectionViewController, CLLocationManag
     var locationManager: CLLocationManager!
     var long: CLLocationDegrees!
     var lat: CLLocationDegrees!
-    var imageViewParser: NSXMLParser!
+    var imageViewParser: XMLParser!
     var tempFlickrImageDictionary: [String: String]! = Dictionary()
     var pageNumber = 1
 
@@ -36,7 +36,7 @@ class ImageCollectionViewController: UICollectionViewController, CLLocationManag
         // Do any additional setup after loading the view.
     }
     
-    func photoForIndexPath(indexPath: NSIndexPath) -> FlickrImage {
+    func photoForIndexPath(_ indexPath: IndexPath) -> FlickrImage {
         return photos[indexPath.row]
     }
 
@@ -56,18 +56,18 @@ class ImageCollectionViewController: UICollectionViewController, CLLocationManag
     }*/
 
     // MARK: UICollectionViewDataSource
-    override func numberOfSectionsInCollectionView(collectionView: UICollectionView) -> Int {
+    override func numberOfSections(in collectionView: UICollectionView) -> Int {
         //#warning Incomplete method implementation -- Return the number of sections
         return 1
     }
 
-    override func collectionView(collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
+    override func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
         //#warning Incomplete method implementation -- Return the number of items in the section
         return photos.count
     }
 
-    override func collectionView(collectionView: UICollectionView, cellForItemAtIndexPath indexPath: NSIndexPath) -> UICollectionViewCell {
-        let cell = collectionView.dequeueReusableCellWithReuseIdentifier(reuseIdentifier, forIndexPath: indexPath) as! ImageCollectionViewCell
+    override func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
+        let cell = collectionView.dequeueReusableCell(withReuseIdentifier: reuseIdentifier, for: indexPath) as! ImageCollectionViewCell
         
         let flickrImageAtIndex = photoForIndexPath(indexPath)
         
@@ -80,7 +80,7 @@ class ImageCollectionViewController: UICollectionViewController, CLLocationManag
         return cell
     }
     
-    override func collectionView(collectionView: UICollectionView, didSelectItemAtIndexPath indexPath: NSIndexPath) {
+    override func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
         flickrImage = photoForIndexPath(indexPath)
     }
     
@@ -91,19 +91,19 @@ class ImageCollectionViewController: UICollectionViewController, CLLocationManag
         let latDouble = (latString as NSString).doubleValue
         var urlString = "https://api.flickr.com/services/rest/?method=flickr.photos.search&name=value&api_key=535b54e75b084504069f7b66d8bfb7c7&format=json&nojsoncallback=1&per_page=20&bbox=" + String(format: "%f", (longDouble - 0.2)) + "," + String(format: "%f", (latDouble - 0.2)) + "," + String(format: "%f", (longDouble + 0.2)) + "," + String(format: "%f", (latDouble + 0.2))
         urlString = urlString + "&page=" + String(pageNumber)
-        let url = NSURL(string: urlString)
-        let urlRequest = NSURLRequest(URL: url!)
+        let url = URL(string: urlString)
+        let urlRequest = URLRequest(url: url!)
         
-        let operationQue = NSOperationQueue()
+        let operationQue = OperationQueue()
         
         NSURLConnection.sendAsynchronousRequest(urlRequest, queue: operationQue) { response, data, error -> Void in
             if(error != nil) {
-                NSLog("Main Image View Controller", error!)
+                NSLog("Main Image View Controller", error?.localizedDescription ?? "No message returned.")
                 return
             }
             
             do {
-                let results = try NSJSONSerialization.JSONObjectWithData(data!, options: []) as! NSDictionary
+                let results = try JSONSerialization.jsonObject(with: data!, options: []) as! NSDictionary
                 
                 let photosContainer = results["photos"] as! NSDictionary
                 let photosReceived = photosContainer["photo"] as! [NSDictionary]
@@ -116,13 +116,13 @@ class ImageCollectionViewController: UICollectionViewController, CLLocationManag
                     
                     let flickrImage = FlickrImage(photoId: photoID, passedFarm: farm, passedServer: server, passedSecret: secret)
                     
-                    let imageData = NSData(contentsOfURL: flickrImage.getImageURL("t"))
+                    let imageData = try? Data(contentsOf: flickrImage.getImageURL("t"))
                     flickrImage.thumbnail = UIImage(data: imageData!)
                     
                     self.photos.append(flickrImage)
                 }
                 
-                dispatch_async(dispatch_get_main_queue(), {
+                DispatchQueue.main.async(execute: {
                     self.collectionView?.reloadData();
                     self.pageNumber = self.pageNumber + 1
                     self.fetchAllImages()
@@ -134,7 +134,7 @@ class ImageCollectionViewController: UICollectionViewController, CLLocationManag
         }
     }
     
-    func locationManager(manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
+    func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
         let location = locationManager.location!.coordinate
         
         self.long = location.longitude
